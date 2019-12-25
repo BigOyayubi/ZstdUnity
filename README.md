@@ -1,5 +1,5 @@
 # ZstdUnity
-simple zstandard binding for unity
+simple zstandard decompress binding for unity
 
 # QuickStart
 
@@ -29,7 +29,7 @@ using(var context = DecompressContext.Create())
     if( result <  0 ) {throw new System.Exception("decompress error"); }
     System.Array.Copy(work, 0, dst, totalDecompressed, result);
     totalDecompressed += result;
-  }
+  }while(totalDecompressed < dst.Length);
 }
 
 //with dictionary
@@ -50,7 +50,7 @@ using(var context = DecompressContext.CreateWithStreamDictionary(dit))
     if( result <  0 ) {throw new System.Exception("decompress error"); }
     System.Array.Copy(work, 0, dst, totalDecompressed, result);
     totalDecompressed += result;
-  }
+  }while(totalDecompressed < dst.Length);
 }
 ```
 
