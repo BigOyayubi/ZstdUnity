@@ -15,3 +15,12 @@ plugin/
 Assets/Plugins/
 Assets/Scenes/
 .DS_Store
+.vs/
+Library/
+Packages/
+ProjectSettings/
+Temp/
+*.sln
+*.csproj
+obj/
+
