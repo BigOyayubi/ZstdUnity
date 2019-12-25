@@ -10,11 +10,13 @@ namespace Uzstd.Test
         // Use this for initialization
         void Start()
         {
-            var before   = Resources.Load<TextAsset>("sample").bytes; //圧縮前データ
+            var before   = Resources.Load<TextAsset>("txt/sample0").bytes; //圧縮前データ
             var deflated = Resources.Load<TextAsset>("sample_deflated").bytes; //圧縮後データ
+            var dictdeflated = Resources.Load<TextAsset>("sample_dictdeflated").bytes; //辞書圧縮後データ
+            var dict = Resources.Load<TextAsset>("sample_dict").bytes;
 
-            Debug.Log(string.Format("deflate before {0}byte after {1}byte", before.Length, deflated.Length));
-
+            Debug.Log(string.Format("    deflate before {0}byte after {1}byte", before.Length, deflated.Length));
+            Debug.Log(string.Format("dictdeflate before {0}byte after {1}byte", before.Length, dictdeflated.Length));
 
             //simple decompress
             {
@@ -24,11 +26,22 @@ namespace Uzstd.Test
                 CompareBuffer(before, buffer, "simple decompress buffer check");
             }
 
+            //dictionary decompress
+            {
+                using (var decompressContext = DecompressContext.CreateWithDictionary(dict))
+                {
+                    var buffer = new byte[before.Length];
+                    var result = API.decompressDictionary(decompressContext, buffer, buffer.Length, deflated, deflated.Length);
+                    Debug.Log(string.Format("dictionary decompress result {0}", result));
+                    CompareBuffer(before, buffer, "dictionary decompress buffer check");
+                }
+            }
+
             //stream decompress
             using (var decompressContext = DecompressContext.Create())
             {
                 var buffer = new byte[before.Length];
-                var result = API.decompressStream(decompressContext, buffer, 0, buffer.Length, deflated, deflated.Length);
+                var result = API.decompressStream(decompressContext, buffer, buffer.Length, deflated, deflated.Length);
                 Debug.Log(string.Format("streaming decompress result {0}", result));
                 CompareBuffer(before, buffer, "streaming decompress buffer check");
             }
@@ -41,7 +54,7 @@ namespace Uzstd.Test
                 var work = new byte[buffer.Length / 4];
                 do
                 {
-                    var result = API.decompressStream(decompressContext, work, 0, work.Length, deflated, deflated.Length);
+                    var result = API.decompressStream(decompressContext, work, work.Length, deflated, deflated.Length);
                     if (result == 0) { break; } // success decompress all.
                     if (result < 0) { throw new System.Exception("decompress failed"); }
 
@@ -50,6 +63,15 @@ namespace Uzstd.Test
 
                 } while (totalDecompressed < buffer.Length);
                 CompareBuffer(before, buffer, "streaming decompress2 buffer check");
+            }
+
+            //stream decompress
+            using (var decompressContext = DecompressContext.CreateWithStreamDictionary(dict))
+            {
+                var buffer = new byte[before.Length];
+                var result = API.decompressStream(decompressContext, buffer, buffer.Length, deflated, deflated.Length);
+                Debug.Log(string.Format("streaming decompress result {0}", result));
+                CompareBuffer(before, buffer, "stream dictionary decompress buffer check");
             }
         }
 
