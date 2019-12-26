@@ -103,7 +103,7 @@ endif ()
 
 if ( WIN32 AND NOT CYGWIN )
 	target_link_libraries(zstd
-		m
+		ws2_32
 	)
 endif ()
 
