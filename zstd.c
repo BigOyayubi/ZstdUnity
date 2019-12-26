@@ -1,6 +1,13 @@
 
+#include <stdint.h>
 #include "zstd.h"
 #include "decompress/zstd_decompress_internal.h"
+
+#if defined(_WIN32)
+#define ZSTD_EXPORT __declspec(dllexport)
+#else
+#define ZSTD_EXPORT extern 
+#endif
 
 /////////////////////////////////////
 // Simple Decompress
@@ -8,7 +15,7 @@
 
 // decompress zstd data
 // return 1; decompress failed.
-extern int32_t decompress(uint8_t* dst, int32_t dstSize, const uint8_t* src, int32_t srcSize)
+ZSTD_EXPORT int32_t decompress(uint8_t* dst, int32_t dstSize, const uint8_t* src, int32_t srcSize)
 {
   size_t result = ZSTD_decompress(dst, dstSize, src, srcSize);
   return ZSTD_isError(result);
@@ -27,7 +34,7 @@ typedef struct {
 
 // initialize DecompressContext common.
 // return 1; initialize error.
-extern int32_t initializeDecompressContext(DecompressContext *const context)
+ZSTD_EXPORT int32_t initializeDecompressContext(DecompressContext *const context)
 {
   context->dctx = ZSTD_createDCtx();
   context->ddict = NULL;
@@ -39,7 +46,7 @@ extern int32_t initializeDecompressContext(DecompressContext *const context)
 
 // initialize DecompressContext with dictionary.
 // return 1; initialize error.
-extern int32_t initializeDecompressContextDictionary(DecompressContext *const context, const uint8_t *const dict, int32_t dictSize)
+ZSTD_EXPORT int32_t initializeDecompressContextDictionary(DecompressContext *const context, const uint8_t *const dict, int32_t dictSize)
 {
   if(initializeDecompressContext(context))
   {
@@ -51,7 +58,7 @@ extern int32_t initializeDecompressContextDictionary(DecompressContext *const co
 
 // initialize DecompressContext with stream and dictionary..
 // return 1; initialize error.
-extern int32_t initializeDecompressContextStreamDictionary(DecompressContext *const context, const uint8_t *const dict, int32_t dictSize)
+ZSTD_EXPORT int32_t initializeDecompressContextStreamDictionary(DecompressContext *const context, const uint8_t *const dict, int32_t dictSize)
 {
   if(initializeDecompressContextDictionary(context, dict, dictSize))
   {
@@ -67,7 +74,7 @@ extern int32_t initializeDecompressContextStreamDictionary(DecompressContext *co
 }
 
 // finalize decompress stream context
-extern void finalizeDecompressContext(DecompressContext *const context)
+ZSTD_EXPORT void finalizeDecompressContext(DecompressContext *const context)
 {
   if(context == NULL) return;
   if(context->dctx != NULL)
@@ -90,7 +97,7 @@ extern void finalizeDecompressContext(DecompressContext *const context)
 // streaming decompress (with dictionary)
 // return -1, cause error
 // return >=0, decompressSize
-extern int32_t decompressStream(
+ZSTD_EXPORT int32_t decompressStream(
   DecompressContext *const context,
   uint8_t* dst,
   int32_t dstSize,
@@ -105,7 +112,7 @@ extern int32_t decompressStream(
 
   ZSTD_inBuffer input = {readPtr, readSize, 0};
 
-  int32_t lastRet;
+  size_t lastRet;
   int32_t decompressSize = 0;
   while(input.pos < input.size)
   {
@@ -117,8 +124,8 @@ extern int32_t decompressStream(
     if(ZSTD_isError(ret)) { return -1; }
     
     lastRet = ret;
-    decompressSize += output.pos;
-    dstSize -= output.pos;
+    decompressSize += (int32_t)output.pos;
+    dstSize -= (int32_t)output.pos;
     if(dstSize < 0) { return -1; }
     if(dstSize == 0) { lastRet = 0; break; } //dst buffer is full. 
   }
@@ -136,7 +143,7 @@ extern int32_t decompressStream(
 
 // decompress with dictionary.
 // return 1; decompress failed.
-extern int32_t decompressDictionary(
+ZSTD_EXPORT int32_t decompressDictionary(
   DecompressContext *const context,
   uint8_t *const dst,
   int32_t dstSize,
