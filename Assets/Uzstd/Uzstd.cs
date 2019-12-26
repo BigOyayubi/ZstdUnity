@@ -40,7 +40,7 @@ namespace Uzstd
         public static extern int decompressDictionary([In][Out] DecompressContext context, [Out] byte[] dst, int dstSize, [In] byte[] src, int srcSize);
 
         /// <summary>
-        /// streaming (with dictionary) decompress zstd
+        /// streaming decompress zstd
         /// return > 0. decompressed size
         /// return = 0. done decompress.
         /// return < 0. error.
@@ -64,6 +64,13 @@ namespace Uzstd
         /// </example>
         [DllImport(ZSTDDLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int decompressStream([In][Out] DecompressContext context, [Out] byte[] dst, int dstSize, [In] byte[] src, int srcSize);
+
+        /// <summary>
+        /// streaming decompress zstd (with dictionary)
+        /// <see cref="decompressStream(DecompressContext, byte[], int, byte[], int)"/>
+        /// </summary>
+        [DllImport(ZSTDDLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int decompressStreamDictionary([In][Out] DecompressContext context, [Out] byte[] dst, int dstSize, [In] byte[] src, int srcSize);
     }
 
     /// <summary>
@@ -81,7 +88,7 @@ namespace Uzstd
         /// <summary>
         /// create for stream.
         /// </summary>
-        public static DecompressContext Create()
+        public static DecompressContext CreateWithStream()
         {
             var context = new DecompressContext();
             initializeDecompressContext(context);

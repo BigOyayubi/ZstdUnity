@@ -10,12 +10,30 @@
 #endif
 
 /////////////////////////////////////
+// forward declaration
+/////////////////////////////////////
+
+typedef struct
+{
+  ZSTD_DCtx *dctx;
+  ZSTD_DDict *ddict;
+  ZSTD_DStream *dstream;
+  size_t totalReadSize;
+} DecompressContext;
+
+typedef size_t (*decompressStreamFunc_t)(DecompressContext *const context, ZSTD_outBuffer *const output, ZSTD_inBuffer *const input);
+
+size_t decompressStreamWithoutDictionary(DecompressContext *const context, ZSTD_outBuffer *const output, ZSTD_inBuffer *const input);
+size_t decompressStreamWithDictionary(DecompressContext *const context, ZSTD_outBuffer *const output, ZSTD_inBuffer *const input);
+int32_t decompressStreamImpl( decompressStreamFunc_t func, DecompressContext *const context,uint8_t* dst, int32_t dstSize, const uint8_t *const src, int32_t srcSize);
+
+/////////////////////////////////////
 // Simple Decompress
 /////////////////////////////////////
 
 // decompress zstd data
 // return 1; decompress failed.
-ZSTD_EXPORT int32_t decompress(uint8_t* dst, int32_t dstSize, const uint8_t* src, int32_t srcSize)
+ZSTD_EXPORT int32_t decompress(uint8_t *dst, int32_t dstSize, const uint8_t *src, int32_t srcSize)
 {
   size_t result = ZSTD_decompress(dst, dstSize, src, srcSize);
   return ZSTD_isError(result);
@@ -24,14 +42,6 @@ ZSTD_EXPORT int32_t decompress(uint8_t* dst, int32_t dstSize, const uint8_t* src
 /////////////////////////////////////
 // Streaming Decompress
 /////////////////////////////////////
-
-typedef struct {
-    ZSTD_DCtx* dctx;
-    ZSTD_DDict* ddict;
-    ZSTD_DStream* dstream;
-    size_t totalReadSize;
-} DecompressContext;
-
 // initialize DecompressContext common.
 // return 1; initialize error.
 ZSTD_EXPORT int32_t initializeDecompressContext(DecompressContext *const context)
@@ -94,10 +104,45 @@ ZSTD_EXPORT void finalizeDecompressContext(DecompressContext *const context)
   }
 }
 
-// streaming decompress (with dictionary)
+// streaming decompress
 // return -1, cause error
 // return >=0, decompressSize
 ZSTD_EXPORT int32_t decompressStream(
+  DecompressContext *const context,
+  uint8_t* dst,
+  int32_t dstSize,
+  const uint8_t *const src,
+  int32_t srcSize)
+{
+  return decompressStreamImpl( decompressStreamWithoutDictionary, context, dst, dstSize, src, srcSize);
+}
+
+// streaming decompress (with dictionary)
+// return -1, cause error
+// return >=0, decompressSize
+ZSTD_EXPORT int32_t decompressStreamDictionary(
+    DecompressContext *const context,
+    uint8_t *dst,
+    int32_t dstSize,
+    const uint8_t *const src,
+    int32_t srcSize)
+{
+  return decompressStreamImpl(decompressStreamWithDictionary, context, dst, dstSize, src, srcSize);
+}
+
+
+size_t decompressStreamWithoutDictionary(DecompressContext *const context, ZSTD_outBuffer *const output, ZSTD_inBuffer *const input)
+{
+  return ZSTD_decompressStream(context->dctx, output, input);
+}
+
+size_t decompressStreamWithDictionary(DecompressContext *const context, ZSTD_outBuffer *const output, ZSTD_inBuffer *const input)
+{
+  return ZSTD_decompressStream(context->dstream, output, input);
+}
+
+int32_t decompressStreamImpl(
+  decompressStreamFunc_t func,
   DecompressContext *const context,
   uint8_t* dst,
   int32_t dstSize,
@@ -120,7 +165,7 @@ ZSTD_EXPORT int32_t decompressStream(
     ZSTD_outBuffer output = {writePtr, dstSize, 0};
 
     // when return code is zero, the frame is complete
-    size_t const ret = ZSTD_decompressStream(context->dctx, &output, &input);
+    size_t const ret = func(context, &output, &input);
     if(ZSTD_isError(ret)) { return -1; }
     
     lastRet = ret;

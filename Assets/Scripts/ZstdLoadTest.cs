@@ -38,7 +38,7 @@ namespace Uzstd.Test
             }
 
             //stream decompress
-            using (var decompressContext = DecompressContext.Create())
+            using (var decompressContext = DecompressContext.CreateWithStream())
             {
                 var buffer = new byte[before.Length];
                 var result = API.decompressStream(decompressContext, buffer, buffer.Length, deflated, deflated.Length);
@@ -47,7 +47,7 @@ namespace Uzstd.Test
             }
 
             //stream decompress using work buffer
-            using (var decompressContext = DecompressContext.Create())
+            using (var decompressContext = DecompressContext.CreateWithStream())
             {
                 var buffer = new byte[before.Length];
                 int totalDecompressed = 0;
@@ -65,11 +65,11 @@ namespace Uzstd.Test
                 CompareBuffer(before, buffer, "streaming decompress2 buffer check");
             }
 
-            //stream decompress
+            //stream decompress with dictionary
             using (var decompressContext = DecompressContext.CreateWithStreamDictionary(dict))
             {
                 var buffer = new byte[before.Length];
-                var result = API.decompressStream(decompressContext, buffer, buffer.Length, deflated, deflated.Length);
+                var result = API.decompressStreamDictionary(decompressContext, buffer, buffer.Length, deflated, deflated.Length);
                 Debug.Log(string.Format("streaming decompress result {0}", result));
                 CompareBuffer(before, buffer, "stream dictionary decompress buffer check");
             }

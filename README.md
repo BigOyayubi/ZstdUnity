@@ -28,7 +28,7 @@ byte[] dst = new byte[decompressedSize];
 Uzstd.API.decompress(dst, dst.Length, compressed, compressed.Length);
 
 //stream
-using(var context = DecompressContext.Create())
+using(var context = DecompressContext.CreateWithStream())
 {
   byte[] work;
   int totalDecompressed = 0;
@@ -55,7 +55,7 @@ using(var context = DecompressContext.CreateWithStreamDictionary(dit))
   int totalDecompressed = 0;
   do
   {
-    var result = Uzstd.API.decompressStream(context, work, work.Length, compressed, compressed.Length);
+    var result = Uzstd.API.decompressStreamDictionary(context, work, work.Length, compressed, compressed.Length);
     if( result == 0 ) {break;} //decompress done.
     if( result <  0 ) {throw new System.Exception("decompress error"); }
     System.Array.Copy(work, 0, dst, totalDecompressed, result);
