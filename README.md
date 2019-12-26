@@ -1,6 +1,16 @@
 # ZstdUnity
 simple zstandard decompress binding for unity
 
+# References
+
+ZstdUnity is inspired by xLua[1] build sets.
+
+* [1] xLua, https://github.com/Tencent/xLua
+
+# Dependencies
+
+* cmake
+
 # QuickStart
 
 * make plugins
