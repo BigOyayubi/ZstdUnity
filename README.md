@@ -56,5 +56,5 @@ using(var context = DecompressContext.CreateWithStreamDictionary(dit))
 
 # TODO
 
-* make build scripts for Android,iOS,Windows,Linux
+* test plugins android/ios/linux.
 
