@@ -1,0 +1,4 @@
+# ignore to change eol by autocrlf.
+# !deflated data is eol=lf txt file!
+*.txt text eol=lf
+
